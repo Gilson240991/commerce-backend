@@ -11,11 +11,17 @@ import org.springframework.security.oauth2.config.annotation.web.configuration.A
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerEndpointsConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
+import org.springframework.security.oauth2.provider.token.TokenEnhancerChain;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
+
+import java.util.Arrays;
 
 @Configuration
 @EnableAuthorizationServer
 public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdapter {
+    @Autowired
+    private InfoAdicionalToken infoAdicionalToken;
+
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
 
@@ -42,13 +48,16 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 
     @Override
     public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
+        TokenEnhancerChain tokenEnhancerChain = new TokenEnhancerChain();
+        tokenEnhancerChain.setTokenEnhancers(Arrays.asList(infoAdicionalToken,accesTokenConverter()));
         endpoints.authenticationManager(authenticationManager)
-                .accessTokenConverter(accesTokenConverter());
+                .accessTokenConverter(accesTokenConverter()).tokenEnhancer(tokenEnhancerChain);
 
     }
     @Bean
     public JwtAccessTokenConverter accesTokenConverter() {
         JwtAccessTokenConverter jwtAccessTokenConverter = new JwtAccessTokenConverter();
+        jwtAccessTokenConverter.setSigningKey(JwtConstant.KEY_SECRET);
         return jwtAccessTokenConverter;
     }
 }
